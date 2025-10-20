@@ -130,29 +130,50 @@ def main():
     Main function to set up command-line argument parsing and run the conversion.
     """
     parser = argparse.ArgumentParser(
-        description="Convert an XML cut file to an SVG file, preserving all dimensions and locations.",
-        epilog="Example: python xml_to_svg_converter.py my_cut_file.xml -o my_drawing.svg"
+        description="Convert XML cut files in a folder to SVG files, preserving all dimensions and locations.",
+        epilog="Example: python xml_to_svg_converter.py ./input_folder -o ./output_folder"
     )
     parser.add_argument(
-        "input_xml",
-        help="The path to the source XML file."
+        "input_folder",
+        help="The path to the folder containing XML files to convert."
     )
     parser.add_argument(
-        "-o", "--output_svg",
-        help="The path for the destination SVG file. If not provided, the output will be saved next to the input file with a .svg extension."
+        "-o", "--output_folder",
+        help="The path for the destination folder to save SVG files. If not provided, SVG files will be saved in the same folder as the input files."
     )
-    
+
     args = parser.parse_args()
-    
-    input_file = args.input_xml
-    output_file = args.output_svg
-    
-    # If no output file is specified, create one based on the input filename
-    if not output_file:
-        base_name, _ = os.path.splitext(input_file)
-        output_file = base_name + '.svg'
-        
-    convert_xml_to_svg(input_file, output_file)
+
+    input_folder = args.input_folder
+    output_folder = args.output_folder
+
+    # Validate input folder exists
+    if not os.path.isdir(input_folder):
+        print(f"Error: Input folder '{input_folder}' does not exist or is not a directory.", file=sys.stderr)
+        sys.exit(1)
+
+    # If no output folder is specified, use the input folder
+    if not output_folder:
+        output_folder = input_folder
+    else:
+        # Create output folder if it doesn't exist
+        os.makedirs(output_folder, exist_ok=True)
+
+    # Get all XML files in the input folder
+    xml_files = [f for f in os.listdir(input_folder) if f.endswith('.xml')]
+
+    if not xml_files:
+        print(f"Warning: No XML files found in folder '{input_folder}'.", file=sys.stderr)
+        sys.exit(0)
+
+    # Process each XML file
+    for xml_file in xml_files:
+        input_file = os.path.join(input_folder, xml_file)
+        base_name, _ = os.path.splitext(xml_file)
+        output_file = os.path.join(output_folder, base_name + '.svg')
+
+        print(f"Converting '{input_file}' to '{output_file}'...")
+        convert_xml_to_svg(input_file, output_file)
 
 if __name__ == '__main__':
     main()
